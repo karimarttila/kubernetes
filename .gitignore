@@ -1,0 +1,23 @@
+# Emacs backups
+*~
+
+# IntelliJ IDEA / PyCharm
+.idea/
+*.iml
+out/
+
+# Log files
+*.log
+
+# tmp directories everywhere
+tmp/
+
+# Personal information
+personal-info/
+
+
+# Terraform state files.
+.terraform/
+
+# SSH files.
+.ssh/
