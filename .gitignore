@@ -15,7 +15,6 @@ tmp/
 # Personal information
 personal-info/
 
-
 # Terraform state files.
 .terraform/
 
