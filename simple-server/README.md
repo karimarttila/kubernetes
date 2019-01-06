@@ -68,6 +68,8 @@ There are some auxiliary scripts to view all entities and delete entities in a K
 
 ## Single Node
 
+The single-node version of Simple Server can be running only in a single node since it uses a simulated internal server embedded database (Clojure Atom, to be specific). But it is easy to use this single-node version in basic Kubernetes deployment exploration since it has no dependencies to external databases.
+
 ### Build Docker Images to the Right Registry
 
 First build the base image(s) and Simple Server Single-node image to Minikube/AWS/Azure registry. Example using Minikube:
