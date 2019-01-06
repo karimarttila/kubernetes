@@ -64,7 +64,7 @@ kubectl config get-contexts          # => List all contexts.
 kubectl config use-context minikube  # => Switched to context "minikube".
 ```
 
-There are some auxiliary scripts to view all entities and delete entities in a K8 namespace: [scripts](TODO).
+There are some auxiliary scripts to view all entities and delete entities in a K8 namespace: [scripts](https://github.com/karimarttila/kubernetes/tree/master/simple-server/scripts).
 
 ## Single Node
 
@@ -80,7 +80,7 @@ docker images                  # => Check that you see the Docker images.
 
 ### Make Kubernetes Deployment
 
-Go to [single-node](TODO) directory. 
+Go to [single-node](https://github.com/karimarttila/kubernetes/tree/master/simple-server/single-node) directory. 
 
 ```bash
 kubectl config current-context                     # => Check context.
