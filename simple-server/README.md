@@ -6,9 +6,11 @@
 - [Minikube](#minikube)
 - [Kubernetes Deployment Configurations](#kubernetes-deployment-configurations)
   - [Single Node](#single-node)
-    - [Build Docker Images to the Right Registry](#build-docker-images-to-the-right-registry)
-    - [Make Kubernetes Deployment](#make-kubernetes-deployment)
-- [Kubernetes Documentation Resources](#kubernetes-documentation-resources)
+    - [Minikube Deployment](#minikube-deployment)
+    - [Azure AKS Deployment](#azure-aks-deployment)
+      - [Tag and Push Docker Images](#tag-and-push-docker-images)
+      - [Get Kubectl Context for Azure AKS](#get-kubectl-context-for-azure-aks)
+      - [Deploy Kubernetes Configuration to Azure AKS](#deploy-kubernetes-configuration-to-azure-aks)
 
 # Introduction
 
@@ -66,13 +68,15 @@ kubectl config use-context minikube  # => Switched to context "minikube".
 
 There are some auxiliary scripts to view all entities and delete entities in a K8 namespace: [scripts](https://github.com/karimarttila/kubernetes/tree/master/simple-server/scripts).
 
+
 ## Single Node
 
 The single-node version of Simple Server can be running only in a single node since it uses a simulated internal server embedded database (Clojure Atom, to be specific). But it is easy to use this single-node version in basic Kubernetes deployment exploration since it has no dependencies to external databases.
 
-### Build Docker Images to the Right Registry
 
-First build the base image(s) and Simple Server Single-node image to Minikube/AWS/Azure registry. Example using Minikube:
+### Minikube Deployment
+
+First build the base image(s) and Simple Server Single-node image to Minikube registry:
 
 ```bash
 eval $(minikube docker-env)    # Switch to Minikube registry.
@@ -80,9 +84,7 @@ eval $(minikube docker-env)    # Switch to Minikube registry.
 docker images                  # => Check that you see the Docker images.
 ```
 
-### Make Kubernetes Deployment
-
-Go to [single-node](https://github.com/karimarttila/kubernetes/tree/master/simple-server/single-node) directory. 
+Then we can do the actual Kubernetes deployment. Go to [single-node](https://github.com/karimarttila/kubernetes/tree/master/simple-server/single-node) directory. 
 
 ```bash
 kubectl config current-context                     # => Check context.
@@ -92,6 +94,87 @@ minikube ip                                        # => Check Minikube's ip.
 kubectl get all --namespace km-ss-single-node-ns   # => Check LB's port.
 ./call-all-ip-port.sh 192.168.99.100 30088         # call-all-ip-port.sh in Clojure Simple Server scripts directory.
 ```
+
+
+### Azure AKS Deployment
+
+#### Tag and Push Docker Images
+
+I'm using the AKS infra I created in [Simple Server Azure AKS](https://github.com/karimarttila/azure/tree/master/simple-server-aks).
+
+Next we deploy the same single-node version to Azure AKS.
+
+First we need to know the name of the ACR terraform created. You can output the ACR name using terraform output command:
+
+```bash
+terraform output -module=env-def.acr  # => acr_name = YOURACRNAME
+```
+
+Login to that ACR registry:
+
+az acr login --name YOURACRNAME
+
+First you need to tag the Docker images using that acr name:
+
+```bash
+docker images   # => Check the initial tags first.
+docker tag karimarttila/debian-openjdk11:0.1 YOURACRNAME.azurecr.io/karimarttila/debian-openjdk11:0.1
+docker tag karimarttila/simple-server-clojure-single-node:0.1 YOURACRNAME.azurecr.io/karimarttila/simple-server-clojure-single-node:0.1
+docker images   # => Check that you have the ACR tagged images.
+```
+
+Then we can push the tagged images to Azure ACR we created using terraform:
+
+```bash
+docker images   # => Check the images you are about to push.
+docker push YOURACRNAME.azurecr.io/karimarttila/debian-openjdk11:0.1
+docker push YOURACRNAME.azurecr.io/karimarttila/simple-server-clojure-single-node:0.1
+```
+
+You can automate this application layer Docker push to ACR later on if you wish.
+
+#### Get Kubectl Context for Azure AKS
+
+For using kubectl command line tool with Azure AKS I created earlier in [Simple Server Azure AKS](https://github.com/karimarttila/azure/tree/master/simple-server-aks) we need to get the azure aks credentials:
+
+```bash
+kubectl config get-clusters  # => Check the original set of your kube clusters.
+terraform output -module=env-def.main-resource-group  # => Get the resource group name using terraform.
+terraform output -module=env-def.aks | grep name      # => Get the AKS cluster name
+az aks get-credentials --resource-group RESOURCE-GROUP-NAME --name AKS-CLUSTER-NAME
+kubectl config get-clusters          # => You should now see the new cluster.
+kubectl config current-context       # => Check which cluster is current.
+kubectl config use-context AZURE-AKS-CONTEXT   # => Choose the Azure AKS context you got.  
+```
+ 
+#### Deploy Kubernetes Configuration to Azure AKS
+
+The actual deployment goes almost the same way as with Minikube earlier. The only exception is that we are going to need the static ip for the Simple server Kubernetes Load balancer entity. You can ask the public ip address that we earlier created using terraform using command:
+
+```bash
+terraform output -module=env-def.single-node-pip  # => public_ip_address = PUBLIC-IP
+```
+
+
+kubectl config current-context                     # => Check context.
+./create-simple-server-namespace.sh                # => Deploy.
+./create-simple-server-deployment.sh
+kubectl get all --namespace km-ss-single-node-ns   # => Check LB's port.
+./call-all-ip-port.sh 192.168.99.100 30088         # call-all-ip-port.sh in Clojure Simple Server scripts directory.
+```
+
+
+
+## Azure Table Storage Service
+
+
+
+
+
+
+
+
+
 
 # Kubernetes Documentation Resources
 
