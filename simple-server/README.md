@@ -27,7 +27,10 @@ The Simple Server AWS DynamoDB version provides Kubernetes deployments for AWS E
 
 The Simple Server language version in all these K8 versions is the Clojure version, see: [Simple Server Clojure](https://github.com/karimarttila/clojure/tree/master/clj-ring-cljs-reagent-demo/simple-server).
 
- 
+# Dependency to My Docker Repository
+
+This Kubernetes project uses Simple Server Docker images - the build instructions and scripts are in my [Docker Repository](https://github.com/karimarttila/docker/tree/master/demo-images/simple-server/clojure).
+
 
 # Minikube
 
