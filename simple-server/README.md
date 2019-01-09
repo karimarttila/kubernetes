@@ -5,12 +5,15 @@
 - [Introduction](#introduction)
 - [Minikube](#minikube)
 - [Kubernetes Deployment Configurations](#kubernetes-deployment-configurations)
+  - [Some Observations Regarding the Kubernetes Configuration](#some-observations-regarding-the-kubernetes-configuration)
   - [Single Node](#single-node)
     - [Minikube Deployment](#minikube-deployment)
     - [Azure AKS Deployment](#azure-aks-deployment)
       - [Tag and Push Docker Images](#tag-and-push-docker-images)
       - [Get Kubectl Context for Azure AKS](#get-kubectl-context-for-azure-aks)
       - [Deploy Kubernetes Configuration to Azure AKS](#deploy-kubernetes-configuration-to-azure-aks)
+  - [Azure Table Storage Service](#azure-table-storage-service)
+- [Kubernetes Documentation Resources](#kubernetes-documentation-resources)
 
 # Introduction
 
@@ -69,6 +72,14 @@ kubectl config use-context minikube  # => Switched to context "minikube".
 There are some auxiliary scripts to view all entities and delete entities in a K8 namespace: [scripts](https://github.com/karimarttila/kubernetes/tree/master/simple-server/scripts).
 
 
+## Some Observations Regarding the Kubernetes Configuration
+
+Before we go to the actual Kubernetes deployments let's have a short review regarding some aspects of the configurations I've done.
+
+**Image name**. Kubernetes deployment configurations are static yaml files - you don't have an argument mechanism e.g. to supply the image name to the deployment as an argument. We could have used [Helm](https://helm.sh/) which is a Kubernetes Package Manager to provide parameterization but using Helm just to provide the image name sounds a bit of an overkill. Therefore I did this part with bash/sed. Maybe later on I explore Helm a bit and provide this part using Helm.
+**Automation**. I automated the actual ACR, AKS ets. Azure infra using Terraform. But the Kubernetes deployment part could be automated as well using Helm, bash or something like that. I didn't automate that part so that the reader can experiment the commands himself/herself and maybe this way get a better understanding of the overall Kubernetes deployment process. Maybe I will provide a short bash script to automate most of this anyway later on.
+ 
+
 ## Single Node
 
 The single-node version of Simple Server can be running only in a single node since it uses a simulated internal server embedded database (Clojure Atom, to be specific). But it is easy to use this single-node version in basic Kubernetes deployment exploration since it has no dependencies to external databases.
@@ -88,12 +99,17 @@ Then we can do the actual Kubernetes deployment. Go to [single-node](https://git
 
 ```bash
 kubectl config current-context                     # => Check context.
-./create-simple-server-namespace.sh                # => Deploy.
-./create-simple-server-deployment.sh
+./create-simple-server-namespace.sh                # => Deploy namespace.
 minikube ip                                        # => Check Minikube's ip.
-kubectl get all --namespace km-ss-single-node-ns   # => Check LB's port.
-./call-all-ip-port.sh 192.168.99.100 30088         # call-all-ip-port.sh in Clojure Simple Server scripts directory.
+./create-simple-server-deployment.sh minikube 192.168.99.100 0.1  # => Deploy K8 deployment. Use Minikube's ip.
+kubectl get all --namespace kari-ss-single-node-ns # => Check LB's port.
+curl http://192.168.99.100:31111/info              # => Try curling LB.
+./call-all-ip-port.sh 192.168.99.100 31111         # call-all-ip-port.sh in Clojure Simple Server scripts directory.
+kubectl get all --all-namespaces                   # => See all stuff in K8 cluster.
+kubectl describe pod kari-ss-single-node-deployment-7c5557db8 --namespace kari-ss-single-node-ns                # => Check pod details of one pod.
 ```
+
+If you got a lot of data when running "call-all-ip-port.sh" test script the deployment worked and you have successfully deployed the Simple Server Single-node version to Minikube Kubernetes cluster.
 
 
 ### Azure AKS Deployment
@@ -129,6 +145,7 @@ Then we can push the tagged images to Azure ACR we created using terraform:
 docker images   # => Check the images you are about to push.
 docker push YOURACRNAME.azurecr.io/karimarttila/debian-openjdk11:0.1
 docker push YOURACRNAME.azurecr.io/karimarttila/simple-server-clojure-single-node:0.1
+az acr repository list --name YOURACRNAME --output table  # => Check that the images are safely in your Azure ACR registry.
 ```
 
 You can automate this application layer Docker push to ACR later on if you wish.
@@ -138,7 +155,7 @@ You can automate this application layer Docker push to ACR later on if you wish.
 For using kubectl command line tool with Azure AKS I created earlier in [Simple Server Azure AKS](https://github.com/karimarttila/azure/tree/master/simple-server-aks) we need to get the azure aks credentials:
 
 ```bash
-kubectl config get-clusters  # => Check the original set of your kube clusters.
+kubectl config get-clusters      # => Check the original set of your kube clusters.
 terraform output -module=env-def.main-resource-group  # => Get the resource group name using terraform.
 terraform output -module=env-def.aks | grep name      # => Get the AKS cluster name
 az aks get-credentials --resource-group RESOURCE-GROUP-NAME --name AKS-CLUSTER-NAME
@@ -155,23 +172,30 @@ The actual deployment goes almost the same way as with Minikube earlier. The onl
 terraform output -module=env-def.single-node-pip  # => public_ip_address = PUBLIC-IP
 ```
 
+Or using Azure cli (it's either 0 or 1):
 
-kubectl config current-context                     # => Check context.
-./create-simple-server-namespace.sh                # => Deploy.
-./create-simple-server-deployment.sh
-kubectl get all --namespace km-ss-single-node-ns   # => Check LB's port.
-./call-all-ip-port.sh 192.168.99.100 30088         # call-all-ip-port.sh in Clojure Simple Server scripts directory.
+```bash
+az network public-ip list --resource-group karissaks-dev-main --query [0].ipAddress --output tsv
+az network public-ip list --resource-group karissaks-dev-main --query [0].name --output tsv
 ```
 
+```bash
+kubectl config current-context                     # => Check context.
+kubectl config use-context AZURE-AKS-CONTEXT       # => Change context if needed.
+./create-simple-server-namespace.sh                # => Deploy namespace.
+./create-simple-server-deployment.sh azure 11.11.11.11 0.1  # => Deploy K8 deployment. Use Static ip we created earlier and you queried just 5 secs ago.
+kubectl get all --namespace kari-ss-single-node-ns # => Check LB's port.
+# Wait till you get the static ip assigned for "EXTERNAL-IP" (might take for some minutes...).
+curl http://192.168.99.100:31111/info              # => Try curling LB.
+./call-all-ip-port.sh 192.168.99.100 31111         # call-all-ip-port.sh in Clojure Simple Server scripts directory.
+kubectl get all --all-namespaces                   # => See all stuff in K8 cluster.
+kubectl describe pod kari-ss-single-node-deployment-7c5557db8 --namespace kari-ss-single-node-ns                # => Check pod details of one pod.
+```
 
 
 ## Azure Table Storage Service
 
-
-
-
-
-
+TODO
 
 
 

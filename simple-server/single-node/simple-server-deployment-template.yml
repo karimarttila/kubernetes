@@ -11,27 +11,12 @@ spec:
   selector:
     component: kari-ss-single-node-component
     role: kari-ss-single-node-role
+#  loadBalancerIP: REPLACE_IP
   ports:
   - name: http
     port: 3045
+    nodePort: 31111
     protocol: TCP
----
-apiVersion: v1
-kind: Service
-metadata:
-  namespace: kari-ss-single-node-ns
-  name: kari-ss-single-node-deployment-svc
-  labels:
-    component: kari-ss-single-node-component
-    role: kari-ss-single-node-role
-spec:
-  type: NodePort
-  ports:
-  - port: 3045
-    protocol: TCP
-  selector:
-    component: kari-ss-single-node-component
-    role: kari-ss-single-node-role
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -52,7 +37,7 @@ spec:
     spec:
       containers:
       - name: kari-ss-single-node-component
-        image: REPLACE_TAG
+        image: REPLACE_IMAGE_TAG
         env:
         - name: SS_ENV
           value: single-node

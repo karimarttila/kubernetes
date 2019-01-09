@@ -3,7 +3,7 @@
 if [ $# -ne 2 ]
 then
   echo "Usage: ./while-true-get-all.sh <namespace> <wait-secs>"
-  echo "Example: ./while-true-get-all.sh km-ss-single-node-ns 5"
+  echo "Example: ./while-true-get-all.sh kari-ss-single-node-ns 5"
   exit 1
 fi
 

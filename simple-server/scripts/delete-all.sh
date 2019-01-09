@@ -3,7 +3,7 @@
 if [ $# -ne 1 ]
 then
   echo "Usage: ./delete-all.sh <prefix>"
-  echo "Example: ./delete-all.sh km-ss-single-node"
+  echo "Example: ./delete-all.sh kari-ss-single-node"
   echo "Remember to check your kubectl context first: kubectl config current-context"
   exit 1
 fi
