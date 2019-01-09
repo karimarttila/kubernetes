@@ -183,13 +183,14 @@ az network public-ip list --resource-group karissaks-dev-main --query [0].name -
 kubectl config current-context                     # => Check context.
 kubectl config use-context AZURE-AKS-CONTEXT       # => Change context if needed.
 ./create-simple-server-namespace.sh                # => Deploy namespace.
-./create-simple-server-deployment.sh azure 11.11.11.11 0.1  # => Deploy K8 deployment. Use Static ip we created earlier and you queried just 5 secs ago.
+# I added the ACR as parameter - I wanted to test pulling images from different ACRs.
+./create-simple-server-deployment.sh azure 11.11.11.11 0.1 ACR-NAME  # => Deploy K8 deployment. Use Static ip we created earlier and you queried just 5 secs ago.
 kubectl get all --namespace kari-ss-single-node-ns # => Check LB's port.
-# Wait till you get the static ip assigned for "EXTERNAL-IP" (might take for some minutes...).
-curl http://192.168.99.100:31111/info              # => Try curling LB.
-./call-all-ip-port.sh 192.168.99.100 31111         # call-all-ip-port.sh in Clojure Simple Server scripts directory.
+# Wait till you get the static ip assigned for "EXTERNAL-IP" (might take for some minutes..., using "11.11.11.11" below as an example).
+curl http://11.11.11.11:3045/info                  # => Use the external IP and try curling LB.
+./call-all-ip-port.sh 11.11.11.11.100 3045         # call-all-ip-port.sh in Clojure Simple Server scripts directory.
 kubectl get all --all-namespaces                   # => See all stuff in K8 cluster.
-kubectl describe pod kari-ss-single-node-deployment-7c5557db8 --namespace kari-ss-single-node-ns                # => Check pod details of one pod.
+kubectl describe pod kari-ss-single-node-deployment-XXXXXX --namespace kari-ss-single-node-ns                # => Check pod details of one pod.
 ```
 
 
