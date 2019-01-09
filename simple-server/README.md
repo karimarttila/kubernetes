@@ -117,6 +117,9 @@ If you got a lot of data when running "call-all-ip-port.sh" test script the depl
 
 ### Azure AKS Deployment
 
+To build the Azure AKS infra needed for this Kubernetes deployment is given in my [Azure Repository](https://github.com/karimarttila/azure/tree/master/simple-server-aks).
+
+
 #### Tag and Push Docker Images
 
 I'm using the AKS infra I created in [Simple Server Azure AKS](https://github.com/karimarttila/azure/tree/master/simple-server-aks).
