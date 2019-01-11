@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: kari-ss-REPLACE_SS_VERSION-ns
+  name: kari-ss-REPLACE_SS_VERSION-deployment-lb
+  labels:
+    component: kari-ss-REPLACE_SS_VERSION-component
+    role: kari-ss-REPLACE_SS_VERSION-role
+spec:
+  type: LoadBalancer
+  selector:
+    component: kari-ss-REPLACE_SS_VERSION-component
+    role: kari-ss-REPLACE_SS_VERSION-role
+#  loadBalancerIP: REPLACE_IP
+  ports:
+  - name: http
+    port: 3045
+    nodePort: 31111
+    protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: kari-ss-REPLACE_SS_VERSION-ns
+  name: kari-ss-REPLACE_SS_VERSION-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: kari-ss-REPLACE_SS_VERSION-component
+      role: kari-ss-REPLACE_SS_VERSION-role
+  template:
+    metadata:
+      labels:
+        component: kari-ss-REPLACE_SS_VERSION-component
+        role: kari-ss-REPLACE_SS_VERSION-role
+    spec:
+      containers:
+      - name: kari-ss-REPLACE_SS_VERSION-component
+        image: REPLACE_IMAGE_TAG
+        env:
+        - name: SS_ENV
+          value: REPLACE_SS_ENV_VERSION
+        - name: MY_ENV
+          value: dev
+        ports:
+        - containerPort: 3045
+          name: http
+          protocol: TCP
