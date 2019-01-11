@@ -199,10 +199,30 @@ kubectl get all --all-namespaces                   # => See all stuff in K8 clus
 kubectl describe pod kari-ss-single-node-deployment-XXXXXX --namespace kari-ss-single-node-ns                # => Check pod details of one pod.
 ```
 
+So, we demonstrated how to deploy the Simple Server Single-node version to the Azure AKS infra we created earlier in the azure repo side. Let's next deploy the actual Table-storage version that uses Azure Table storage tables as the database.
+
 
 ## Azure Table Storage Service
 
-TODO
+The Simple Server Tables-storage version application needs to access the Tables in the Storage account. There are two basic ways how to do this:
+
+1. The Simple Server application needs the Table storage connection string or storage name and access key as secrets to be able to connect to the Azure Table storage.
+2. We can create a Role assignment in which the scope is the Storage account and we create a Managed identity and give Contributor role for this Managed identity and later on configure the Kubernetes pods running the Simple Server to use this Managed identity (which has access to the Storage account).
+ 
+ The second option is usually how I do things in the AWS side but let's first use the easier solution 1. In the first option there are a couple of ways to provide the secrets to the application running in a Kubernetes cluster pod:
+ 
+ 1. Somehow in the terraform configuration inject the secrets to AKS infra and the appication reads that secret there from the environment.
+ 2. Add the secretes to Azure Key Vault and the application reads the secrets from the Azure Key Vault. In this solution we still have to authorize the app to access the Azure Key Vault first.
+ 3. Just inject the secretes as Kubernetes secrets to the Kubernetes cluster and the app running in pod reads the secrets from the Kubernetes environment.
+ 
+ The third option is the easiest and this is an exercise so I'll first implement the Storage account access this way, maybe later on try other solutions as well.
+ 
+
+### Minikube Deployment
+
+Let's first deploy the Simple Server Azure Table Storage version to Minikube. "Minikube?" - you might be wondering. Yes, the app should be able to access the Azure Table Storage from the Minikube Kubernetes cluster the same way if we have configured the Azure Storage account connection string properly. Let's use document [Distribute Credentials Securely Using Secrets] (https://kubernetes.io/docs/tasks/inject-data-application/distribute-credentials-secure/) how to provide the connection string as a Kubernetes secret to the Kubernetes cluster so that the app running in a Kubernetes cluster pod can access the secret from the environmental variable.
+
+
 
 
 
