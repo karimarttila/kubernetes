@@ -1,4 +1,4 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: kari-ss-single-node-ns
+  name: kari-ss-REPLACE_SS_VERSION-ns
