@@ -213,14 +213,55 @@ The Simple Server Tables-storage version application needs to access the Tables 
  
  1. Somehow in the terraform configuration inject the secrets to AKS infra and the appication reads that secret there from the environment.
  2. Add the secretes to Azure Key Vault and the application reads the secrets from the Azure Key Vault. In this solution we still have to authorize the app to access the Azure Key Vault first.
- 3. Just inject the secretes as Kubernetes secrets to the Kubernetes cluster and the app running in pod reads the secrets from the Kubernetes environment.
+ 3. Inject the secrets as Kubernetes secrets to the Kubernetes cluster and the app running in pod reads the secrets from the Kubernetes environment as instructed in [Distribute Credentials Securely Using Secrets] (https://kubernetes.io/docs/tasks/inject-data-application/distribute-credentials-secure/).
+ 4. Just inject the secrets from sourced environmental variables to the temporary Kubernetes deployment file which is deleted right after deployment and the secret does not end up into Git repository but is safely in the home directory where it was sourced in the first place
  
- The third option is the easiest and this is an exercise so I'll first implement the Storage account access this way, maybe later on try other solutions as well.
+ The fourth option is the easiest and this is an exercise so I'll first implement the Storage account access this way, maybe later on try other solutions as well.
  
 
 ### Minikube Deployment
 
-Let's first deploy the Simple Server Azure Table Storage version to Minikube. "Minikube?" - you might be wondering. Yes, the app should be able to access the Azure Table Storage from the Minikube Kubernetes cluster the same way if we have configured the Azure Storage account connection string properly. Let's use document [Distribute Credentials Securely Using Secrets] (https://kubernetes.io/docs/tasks/inject-data-application/distribute-credentials-secure/) how to provide the connection string as a Kubernetes secret to the Kubernetes cluster so that the app running in a Kubernetes cluster pod can access the secret from the environmental variable.
+Let's first deploy the Simple Server Azure Table Storage version to Minikube. "Minikube?" - you might be wondering. Yes, the app should be able to access the Azure Table Storage from the Minikube Kubernetes cluster the same way if we have configured the Azure Storage account connection string properly.
+
+```bash
+./create-simple-server-deployment.sh azure-table-storage minikube 192.168.99.100 0.1 dummy-acr
+./call-all-ip-port.sh 192.168.99.100 31111
+```
+
+If you see all api calls succesfully returning data then we are good and the pod was succesfully connecting to the Azure Table Storage with the Azure storage connection string that was injected to the pod using the environmental variable.
+
+Doing this step I refactored the ```create-simple-server-deployment.sh``` script quite a bit. So, now we can use the same bash script to deploy different Simple Server versions (single-node / table-storage...) and to deploy to different Kubernetes cluster versions (Minikube / Azure AKS...) 
+
+
+### Azure AKS Deployment
+
+We have to tag the table-storage version and push the tagged images to the Azure ACR registry just with the previous single-node version: see the details in the previous "Single Node" chapter.
+
+
+
+
+
+# Kubernetes Debugging Tricks
+
+## Getting Interactive Shell to a Running Kubernetes Pod
+
+I had to use this trick when I was wondering why the application couldn't find one environmental variable in the pod - and the application crashed and the pod crashed as well. So, first you have to override the Docker entrypoint in the Kubernetes deployment, use e.g. the following command right after image definition:
+
+```yaml
+        command: ["/bin/sh"]
+        args: ["-c", "while true; do echo hello; sleep 10;done"]
+```
+
+The idea is to override the application entrypoint defined in the Docker image with some dummy entrypoint which leaves the pod doing something and not exiting immediately (that's why the indefinite bash while loop).
+
+Then check the pod identifier and use the pod identifier to get an interactive bash to the pod:
+
+```bash
+kubectl get pods --namespace $MY_NS  => Get pod identifier, and use it in the next command:
+kubectl exec -it kari-ss-table-storage-deployment-86b6d498ff-zdqq2  --namespace kari-ss-table-storage-ns /bin/bash
+```
+
+
 
 
 

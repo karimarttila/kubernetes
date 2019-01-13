@@ -43,6 +43,8 @@ spec:
           value: REPLACE_SS_ENV_VERSION
         - name: MY_ENV
           value: dev
+        - name: AZURE_CONNECTION_STRING
+          value: REPLACE_SS_ENDPOINT
         ports:
         - containerPort: 3045
           name: http

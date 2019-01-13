@@ -15,12 +15,21 @@ MY_VERSION=$4
 MY_ACR=$5
 
 if [ "$MY_SS_VERSION" == "single-node" ]; then
+  MY_IMAGE_VERSION="simple-server-clojure-single-node:$MY_VERSION"
   MY_SS_ENV_VALUE=single-node
   MY_KUBE_NAME=single-node
 elif [ "$MY_SS_VERSION" == "azure-table-storage" ]; then
+  MY_IMAGE_VERSION="simple-server-clojure-table-storage:$MY_VERSION"
   MY_SS_ENV_VALUE=azure-table-storage
   MY_KUBE_NAME=table-storage
+  if [[ -z "${AZURE_CONNECTION_STRING}" ]]; then
+    echo "Environmental variable AZURE_CONNECTION_STRING is not set"
+    echo "Source it first using command:"
+    echo "source ~/.azure/kari2ssaksdevtables-connectionstring.sh"
+    exit -1
+  fi
 elif [ "$MY_SS_VERSION" == "aws-dynamodb" ]; then
+  MY_IMAGE_VERSION="simple-server-clojure-aws-dynamodb:$MY_VERSION"
   MY_SS_ENV_VALUE=aws-dynamodb
   MY_KUBE_NAME=dynamodb
 else
@@ -28,9 +37,10 @@ else
   exit 2
 fi
 
-MINIKUBE_IMAGE_TAG="karimarttila\/simple-server-clojure-single-node:$MY_VERSION"
-AZURE_IMAGE_TAG="${MY_ACR}.azurecr.io\/karimarttila\/simple-server-clojure-single-node:$MY_VERSION"
-AWS_IMAGE_TAG="TODO"
+MINIKUBE_IMAGE_TAG="karimarttila\/$MY_IMAGE_VERSION"
+AZURE_IMAGE_TAG="${MY_ACR}.azurecr.io\/$MY_IMAGE_VERSION"
+AWS_IMAGE_TAG="TODO\/$MY_IMAGE_VERSION"
+
 
 if [ "$MY_CHOICE" == "minikube" ]; then
   MY_IMAGE_TAG=$MINIKUBE_IMAGE_TAG
@@ -43,6 +53,12 @@ else
   exit 2
 fi
 
+MY_SS_ENDPOINT=$AZURE_CONNECTION_STRING
+
+# NOTE: You can comment this line if you want to test pod/svc deployment
+# and preserve namespace.
+./create-simple-server-namespace.sh $MY_SS_VERSION
+
 echo "Using ss-version: $MY_SS_VERSION"
 echo "Using tag: $MY_IMAGE_TAG"
 
@@ -54,10 +70,10 @@ sed -i "s/REPLACE_IMAGE_TAG/$MY_IMAGE_TAG/" $FINAL_DEPLOYMENT_FILENAME
 sed -i "s/REPLACE_IP/$MY_IP/" $FINAL_DEPLOYMENT_FILENAME
 sed -i "s/REPLACE_SS_ENV_VERSION/$MY_SS_ENV_VALUE/" $FINAL_DEPLOYMENT_FILENAME
 sed -i "s/REPLACE_SS_VERSION/$MY_KUBE_NAME/" $FINAL_DEPLOYMENT_FILENAME
+# NOTE: Use different separator character since password uses also '/' character. You may have to escape other metacharacters also.
+sed -i "s|REPLACE_SS_ENDPOINT|$MY_SS_ENDPOINT|" $FINAL_DEPLOYMENT_FILENAME
 
 kubectl create -f "$FINAL_DEPLOYMENT_FILENAME"
-
-sleep 1
 
 rm $FINAL_DEPLOYMENT_FILENAME
 
