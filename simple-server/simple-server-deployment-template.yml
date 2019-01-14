@@ -11,11 +11,11 @@ spec:
   selector:
     component: kari-ss-REPLACE_SS_VERSION-component
     role: kari-ss-REPLACE_SS_VERSION-role
-#  loadBalancerIP: REPLACE_IP
+  loadBalancerIP: REPLACE_IP
   ports:
   - name: http
     port: 3045
-    nodePort: 31111
+    nodePort: REPLACE_SS_NODEPORT
     protocol: TCP
 ---
 apiVersion: apps/v1

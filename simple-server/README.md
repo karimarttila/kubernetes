@@ -104,7 +104,7 @@ Then we can do the actual Kubernetes deployment. Go to [single-node](https://git
 kubectl config current-context                     # => Check context.
 ./create-simple-server-namespace.sh                # => Deploy namespace.
 minikube ip                                        # => Check Minikube's ip.
-./create-simple-server-deployment.sh minikube 192.168.99.100 0.1  # => Deploy K8 deployment. Use Minikube's ip.
+./create-simple-server-deployment.sh minikube 192.168.99.100 31111 0.1  # => Deploy K8 deployment. Use Minikube's ip.
 kubectl get all --namespace kari-ss-single-node-ns # => Check LB's port.
 curl http://192.168.99.100:31111/info              # => Try curling LB.
 ./call-all-ip-port.sh 192.168.99.100 31111         # call-all-ip-port.sh in Clojure Simple Server scripts directory.
@@ -190,7 +190,7 @@ kubectl config current-context                     # => Check context.
 kubectl config use-context AZURE-AKS-CONTEXT       # => Change context if needed.
 ./create-simple-server-namespace.sh                # => Deploy namespace.
 # I added the ACR as parameter - I wanted to test pulling images from different ACRs.
-./create-simple-server-deployment.sh azure 11.11.11.11 0.1 ACR-NAME  # => Deploy K8 deployment. Use Static ip we created earlier and you queried just 5 secs ago.
+./create-simple-server-deployment.sh azure 11.11.11.11 31111 0.1 ACR-NAME  # => Deploy K8 deployment. Use Static ip we created earlier and you queried just 5 secs ago.
 kubectl get all --namespace kari-ss-single-node-ns # => Check LB's port.
 # Wait till you get the static ip assigned for "EXTERNAL-IP" (might take for some minutes..., using "11.11.11.11" below as an example).
 curl http://11.11.11.11:3045/info                  # => Use the external IP and try curling LB.
@@ -224,7 +224,7 @@ The Simple Server Tables-storage version application needs to access the Tables 
 Let's first deploy the Simple Server Azure Table Storage version to Minikube. "Minikube?" - you might be wondering. Yes, the app should be able to access the Azure Table Storage from the Minikube Kubernetes cluster the same way if we have configured the Azure Storage account connection string properly.
 
 ```bash
-./create-simple-server-deployment.sh azure-table-storage minikube 192.168.99.100 0.1 dummy-acr
+./create-simple-server-deployment.sh azure-table-storage minikube 192.168.99.100 31111 0.1 dummy-acr
 ./call-all-ip-port.sh 192.168.99.100 31111
 ```
 
@@ -235,10 +235,34 @@ Doing this step I refactored the ```create-simple-server-deployment.sh``` script
 
 ### Azure AKS Deployment
 
-We have to tag the table-storage version and push the tagged images to the Azure ACR registry just with the previous single-node version: see the details in the previous "Single Node" chapter.
+We have to tag the table-storage version and push the tagged images to the Azure ACR registry just with the previous single-node version: see the details in the previous "Single Node" chapter. Then login to acr (```az acr login --name YOUR-ACR-REGISTRY```) and push the image to the ACR. Then check that your base image and demo image are in the registry: ```az acr repository list --name YOUR-ACR-REGISTRY```
 
+We already fetch the Azure AKS credentials when we deployed the single-node version. Switch to that context using command: ```kubectl config use-context YOUR-AKS-CONTEXT```.
 
+In terraform / env directory give command: ```terraform output -module=env-def.table-storage-pip``` => prints the public ip reserved for table-storage version, use it in the next command to deploy the table-storage version to the Azure AKS:
 
+```bash
+./create-simple-server-deployment.sh azure-table-storage azure YOUR-PUBLIC-IP 31112 0.1 kari2ssaksdevacrdemo
+# List Kubernetes entities
+kubectl get all --all-namespaces | grep kari
+...
+kari-ss-single-node-ns     kari-ss-single-node-deployment-7f774f7d4c-n2jhq     1/1       Running   0          4d
+kari-ss-table-storage-ns   kari-ss-table-storage-deployment-7586dc9c9c-mdqfk   1/1       Running   0          3m
+...
+kari-ss-single-node-ns     kari-ss-single-node-deployment-lb     LoadBalancer   10.0.70.228   11.11.11.11    3045:31111/TCP   4d
+kari-ss-table-storage-ns   kari-ss-table-storage-deployment-lb   LoadBalancer   10.0.13.73    11.11.11.11   3045:31112/TCP   3m
+#(real IPs replaced with "11.11.11.11" in the output)
+# Test it!
+./call-all-ip-port.sh YOUR-PUBLIC-IP 3045
+... a lot of listings and at the last line the return value of the last call:
+{"ret":"ok","pg-id":"2","p-id":"49","product":["49","2","Once Upon a Time in the West","99999.9","Leone, Sergio","1968","Italy-USA","Western"]}
+```  
+
+So, everything seemed to be working fine and we have succesfully deployed to Azure AKS our table-storage version of the Simple Server and the application uses Azure Table Storage as its database.
+
+NOTE: We have to use different nodeport this time since we reserved 31111 for single-node version.
+
+NOTE: I tried to comment out the ```loadBalancerIP: REPLACE_IP``` in the yml file and AKS happily assigned some dynamic public IP for the load balancer. I tested the application with my ```call-all-ip-port.sh``` script and everything worked fine also with this public ip. 
 
 
 # Kubernetes Debugging Tricks
@@ -260,13 +284,6 @@ Then check the pod identifier and use the pod identifier to get an interactive b
 kubectl get pods --namespace $MY_NS  => Get pod identifier, and use it in the next command:
 kubectl exec -it kari-ss-table-storage-deployment-86b6d498ff-zdqq2  --namespace kari-ss-table-storage-ns /bin/bash
 ```
-
-
-
-
-
-
-
 
 # Kubernetes Documentation Resources
 

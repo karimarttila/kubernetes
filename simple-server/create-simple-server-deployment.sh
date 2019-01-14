@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-if [ $# -ne 5 ]
+if [ $# -ne 6 ]
 then
-  echo "Usage: ./create-simple-server-deployment.sh <ss-version> <azure/aws/minikube> <ip> <image version> <acr-registry-name>"
-  echo "Example: ./create-simple-server-deployment.sh single-node azure 11.11.11.11 0.1 kari2ssaksdevacrdemo"
+  echo "Usage: ./create-simple-server-deployment.sh <ss-version> <azure/aws/minikube> <ip> <nodeport> <image version> <acr-registry-name>"
+  echo "Example: ./create-simple-server-deployment.sh single-node azure 11.11.11.11 31112 0.1 kari2ssaksdevacrdemo"
   echo "Remember to check your kubectl context first: kubectl config current-context"
   exit 1
 fi
@@ -11,8 +11,9 @@ fi
 MY_SS_VERSION=$1
 MY_CHOICE=$2
 MY_IP=$3
-MY_VERSION=$4
-MY_ACR=$5
+MY_NODEPORT=$4
+MY_VERSION=$5
+MY_ACR=$6
 
 if [ "$MY_SS_VERSION" == "single-node" ]; then
   MY_IMAGE_VERSION="simple-server-clojure-single-node:$MY_VERSION"
@@ -38,7 +39,7 @@ else
 fi
 
 MINIKUBE_IMAGE_TAG="karimarttila\/$MY_IMAGE_VERSION"
-AZURE_IMAGE_TAG="${MY_ACR}.azurecr.io\/$MY_IMAGE_VERSION"
+AZURE_IMAGE_TAG="${MY_ACR}.azurecr.io\/karimarttila\/$MY_IMAGE_VERSION"
 AWS_IMAGE_TAG="TODO\/$MY_IMAGE_VERSION"
 
 
@@ -70,10 +71,11 @@ sed -i "s/REPLACE_IMAGE_TAG/$MY_IMAGE_TAG/" $FINAL_DEPLOYMENT_FILENAME
 sed -i "s/REPLACE_IP/$MY_IP/" $FINAL_DEPLOYMENT_FILENAME
 sed -i "s/REPLACE_SS_ENV_VERSION/$MY_SS_ENV_VALUE/" $FINAL_DEPLOYMENT_FILENAME
 sed -i "s/REPLACE_SS_VERSION/$MY_KUBE_NAME/" $FINAL_DEPLOYMENT_FILENAME
+sed -i "s/REPLACE_SS_NODEPORT/$MY_NODEPORT/" $FINAL_DEPLOYMENT_FILENAME
 # NOTE: Use different separator character since password uses also '/' character. You may have to escape other metacharacters also.
 sed -i "s|REPLACE_SS_ENDPOINT|$MY_SS_ENDPOINT|" $FINAL_DEPLOYMENT_FILENAME
 
+# Just comment these lines out when debugging the script.
 kubectl create -f "$FINAL_DEPLOYMENT_FILENAME"
-
 rm $FINAL_DEPLOYMENT_FILENAME
 
