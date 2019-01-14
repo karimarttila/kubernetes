@@ -3,6 +3,7 @@
 
 # Table of Contents  <!-- omit in toc -->
 - [Introduction](#introduction)
+- [Dependency to My Docker Repository](#dependency-to-my-docker-repository)
 - [Minikube](#minikube)
 - [Kubernetes Deployment Configurations](#kubernetes-deployment-configurations)
   - [Some Observations Regarding the Kubernetes Configuration](#some-observations-regarding-the-kubernetes-configuration)
@@ -13,6 +14,10 @@
       - [Get Kubectl Context for Azure AKS](#get-kubectl-context-for-azure-aks)
       - [Deploy Kubernetes Configuration to Azure AKS](#deploy-kubernetes-configuration-to-azure-aks)
   - [Azure Table Storage Service](#azure-table-storage-service)
+    - [Minikube Deployment](#minikube-deployment-1)
+    - [Azure AKS Deployment](#azure-aks-deployment-1)
+- [Kubernetes Debugging Tricks](#kubernetes-debugging-tricks)
+  - [Getting Interactive Shell to a Running Kubernetes Pod](#getting-interactive-shell-to-a-running-kubernetes-pod)
 - [Kubernetes Documentation Resources](#kubernetes-documentation-resources)
 
 # Introduction
