@@ -90,7 +90,7 @@ Before we go to the actual Kubernetes deployments let's have a short review rega
 
 ## Single Node
 
-The single-node version of Simple Server can be running only in a single node since it uses a simulated internal server embedded database (Clojure Atom, to be specific). But it is easy to use this single-node version in basic Kubernetes deployment exploration since it has no dependencies to external databases.
+The single-node version of Simple Server should be deployed only in a single node configuration since it uses a simulated internal server embedded database (Clojure Atom, to be specific) and is therefore statefull. But it is easy to use this single-node version in basic Kubernetes deployment exploration since it has no dependencies to external databases.
 
 
 ### Minikube Deployment
@@ -209,6 +209,8 @@ So, we demonstrated how to deploy the Simple Server Single-node version to the A
 
 ## Azure Table Storage Service
 
+The Simple Server Tables-storage version is a real stateless application that can be deployed to as many nodes as is needed (stores all application data in Azure Table storage database).
+
 The Simple Server Tables-storage version application needs to access the Tables in the Storage account. There are two basic ways how to do this:
 
 1. The Simple Server application needs the Table storage connection string or storage name and access key as secrets to be able to connect to the Azure Table storage.
@@ -216,8 +218,8 @@ The Simple Server Tables-storage version application needs to access the Tables 
  
  The second option is usually how I do things in the AWS side but let's first use the easier solution 1. In the first option there are a couple of ways to provide the secrets to the application running in a Kubernetes cluster pod:
  
- 1. Somehow in the terraform configuration inject the secrets to AKS infra and the appication reads that secret there from the environment.
- 2. Add the secretes to Azure Key Vault and the application reads the secrets from the Azure Key Vault. In this solution we still have to authorize the app to access the Azure Key Vault first.
+ 1. Somehow in the terraform configuration inject the secrets to AKS infra and the application reads that secret there from the environment.
+ 2. Add the secrets to Azure Key Vault and the application reads the secrets from the Azure Key Vault. In this solution we still have to authorize the app to access the Azure Key Vault first.
  3. Inject the secrets as Kubernetes secrets to the Kubernetes cluster and the app running in pod reads the secrets from the Kubernetes environment as instructed in [Distribute Credentials Securely Using Secrets] (https://kubernetes.io/docs/tasks/inject-data-application/distribute-credentials-secure/).
  4. Just inject the secrets from sourced environmental variables to the temporary Kubernetes deployment file which is deleted right after deployment and the secret does not end up into Git repository but is safely in the home directory where it was sourced in the first place
  
