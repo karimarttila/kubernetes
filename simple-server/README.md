@@ -264,6 +264,8 @@ NOTE: We have to use different nodeport this time since we reserved 31111 for si
 
 NOTE: I tried to comment out the ```loadBalancerIP: REPLACE_IP``` in the yml file and AKS happily assigned some dynamic public IP for the load balancer. I tested the application with my ```call-all-ip-port.sh``` script and everything worked fine also with this public ip. 
 
+NOTE: I really should implement a real Robot Framework test suite to replace this poor man's Robot Framework script ```call-all-ip-port.sh``` - maybe an interesting future project.
+
 
 # Kubernetes Debugging Tricks
 
