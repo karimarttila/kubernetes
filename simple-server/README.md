@@ -124,6 +124,7 @@ If you got a lot of data when running "call-all-ip-port.sh" test script the depl
 
 To build the Azure AKS infra needed for this Kubernetes deployment is given in my [Azure Repository](https://github.com/karimarttila/azure/tree/master/simple-server-aks).
 
+You also need to import the test data into the Azure Tables. You can use scripts found in the [azure-table-storage](https://github.com/karimarttila/clojure/tree/master/clj-ring-cljs-reagent-demo/simple-server/azure-table-storage) directory for this step.
 
 #### Tag and Push Docker Images
 
