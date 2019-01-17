@@ -208,6 +208,30 @@ kubectl describe pod kari-ss-single-node-deployment-XXXXXX --namespace kari-ss-s
 So, we demonstrated how to deploy the Simple Server Single-node version to the Azure AKS infra we created earlier in the azure repo side. Let's next deploy the actual Table-storage version that uses Azure Table storage tables as the database.
 
 
+### AWS EKS Deployment
+
+
+
+```bash
+# First get your account id information:
+AWS_PROFILE=YOUR-AWS-PROFILE aws sts get-caller-identity # => prints account id.
+# Then get ecr login:
+AWS_PROFILE=YOUR-AWS-PROFILE aws ecr get-login --no-include-email # => prints the login info, copy-paste it to terminal to login.
+# Check the repository Uri:
+AWS_PROFILE=YOUR-AWS-PROFILE aws ecr describe-repositories # => Get the repositoryUri for the next command.
+# Then  you need to tag the application using template:
+docker tag YOUR-IMAGE-NAME:VERSION REPOSITORY-URI:VERSION
+# Example:
+docker tag karimarttila/debian-openjdk11:0.1 1111111111111.dkr.ecr.eu-west-1.amazonaws.com/kari-sseks-dev-eks-ecr/karimarttila/debian-openjdk11:0.1 
+# Then push the image using template:
+docker push REPOSITORY-URI:VERSION
+docker push 111111111111111.dkr.ecr.eu-west-1.amazonaws.com/kari-sseks-dev-eks-ecr/karimarttila/debian-openjdk11:0.1
+```
+
+Do the same for images single-node and dynamodb.
+
+
+
 ## Azure Table Storage Service
 
 The Simple Server Tables-storage version is a real stateless application that can be deployed to as many nodes as is needed (stores all application data in Azure Table storage database).
