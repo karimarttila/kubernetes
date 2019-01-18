@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-if [ $# -ne 6 ]
+if [ $# -ne 9 ]
 then
-  echo "Usage: ./create-simple-server-deployment.sh <ss-version> <azure/aws/minikube> <ip> <nodeport> <image version> <acr-registry-name>"
-  echo "Example: ./create-simple-server-deployment.sh single-node azure 11.11.11.11 31112 0.1 kari2ssaksdevacrdemo"
+  echo "Usage: ./create-simple-server-deployment.sh <ss-version> <azure/aws/minikube> <ip> <nodeport> <image version> <acr-registry-name> <aws-account-id> <aws-region> <aws-ecr-repo>"
+  echo "Example: ./create-simple-server-deployment.sh single-node azure 11.11.11.11 31112 0.1 kari2ssaksdevacrdemo dummy-aws-id dummy-aws-region dummy-aws-ecr-repo"
   echo "Remember to check your kubectl context first: kubectl config current-context"
   exit 1
 fi
@@ -13,7 +13,10 @@ MY_CHOICE=$2
 MY_IP=$3
 MY_NODEPORT=$4
 MY_VERSION=$5
-MY_ACR=$6
+MY_AZURE_ACR=$6
+MY_AWS_ACCOUNT=$7
+MY_AWS_REGION=$8
+MY_AWS_ECR_REPO=$9
 
 if [ "$MY_SS_VERSION" == "single-node" ]; then
   MY_IMAGE_VERSION="simple-server-clojure-single-node:$MY_VERSION"
@@ -39,8 +42,8 @@ else
 fi
 
 MINIKUBE_IMAGE_TAG="karimarttila\/$MY_IMAGE_VERSION"
-AZURE_IMAGE_TAG="${MY_ACR}.azurecr.io\/karimarttila\/$MY_IMAGE_VERSION"
-AWS_IMAGE_TAG="TODO\/$MY_IMAGE_VERSION"
+AZURE_IMAGE_TAG="${MY_AZURE_ACR}.azurecr.io\/karimarttila\/$MY_IMAGE_VERSION"
+AWS_IMAGE_TAG="${MY_AWS_ACCOUNT}.dkr.ecr.${MY_AWS_REGION}.amazonaws.com\/${MY_AWS_ECR_REPO}\/karimarttila\/$MY_IMAGE_VERSION"
 
 
 if [ "$MY_CHOICE" == "minikube" ]; then
