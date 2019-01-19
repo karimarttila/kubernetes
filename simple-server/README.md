@@ -366,6 +366,16 @@ AWS_SECRET_ACCESS_KEY=
 AWS_SESSION_TOKEN=
 ```
 
+When modifying the code a bit (credentials for temporary role - session token...) and adding the temporary environmental variables to IDEA and running tests most of the tests ran just fine but some not:
+
+```text
+dynamodb:Query on resource: arn:aws:dynamodb:eu-west-1:1111111111:table/kari-sseks-dev-product/index/PGIndex (Service: AmazonDynamoDBv2; Status Code: 400; Error Code: AccessDeniedException;
+```
+
+So, this was actually a good thing now I also verified that:
+- I'm using the assumed role - running app with Kubernetes worker node EC2 Instance profile role.
+- The Instance profile has rights to query DynamoDB as I configured in Kubernetes EKS project side.
+- But it doesn't have rights to access the index - that was something I didn't know that you have to give access right separately.
 
 
 
