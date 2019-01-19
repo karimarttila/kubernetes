@@ -18,6 +18,9 @@ MY_AWS_ACCOUNT=$7
 MY_AWS_REGION=$8
 MY_AWS_ECR_REPO=$9
 
+MY_SS_ENDPOINT="DUMMY-NOT-USED-OUTSIDE-AZURE"
+MY_SS_IP_LINE="#DUMMY-NOT-USED-OUTSIDE-AZURE"
+
 if [ "$MY_SS_VERSION" == "single-node" ]; then
   MY_IMAGE_VERSION="simple-server-clojure-single-node:$MY_VERSION"
   MY_SS_ENV_VALUE=single-node
@@ -32,6 +35,7 @@ elif [ "$MY_SS_VERSION" == "azure-table-storage" ]; then
     echo "source ~/.azure/kari2ssaksdevtables-connectionstring.sh"
     exit -1
   fi
+  MY_SS_ENDPOINT=$AZURE_CONNECTION_STRING
 elif [ "$MY_SS_VERSION" == "aws-dynamodb" ]; then
   MY_IMAGE_VERSION="simple-server-clojure-aws-dynamodb:$MY_VERSION"
   MY_SS_ENV_VALUE=aws-dynamodb
@@ -50,6 +54,7 @@ if [ "$MY_CHOICE" == "minikube" ]; then
   MY_IMAGE_TAG=$MINIKUBE_IMAGE_TAG
 elif [ "$MY_CHOICE" == "azure" ]; then
   MY_IMAGE_TAG=$AZURE_IMAGE_TAG
+  MY_SS_IP_LINE="loadBalancerIP: $MY_IP"
 elif [ "$MY_CHOICE" == "aws" ]; then
   MY_IMAGE_TAG=$AWS_IMAGE_TAG
 else
@@ -57,7 +62,7 @@ else
   exit 2
 fi
 
-MY_SS_ENDPOINT=$AZURE_CONNECTION_STRING
+
 
 # NOTE: You can comment this line if you want to test pod/svc deployment
 # and preserve namespace.
@@ -70,8 +75,8 @@ ORIG_DEPLOYMENT_FILENAME="simple-server-deployment-template.yml"
 FINAL_DEPLOYMENT_FILENAME="simple-server-deployment_${MY_CHOICE}_${MY_SS_VERSION}_final.yml"
 
 cp $ORIG_DEPLOYMENT_FILENAME $FINAL_DEPLOYMENT_FILENAME
-sed -i "s/REPLACE_IMAGE_TAG/$MY_IMAGE_TAG/" $FINAL_DEPLOYMENT_FILENAME
-sed -i "s/REPLACE_IP/$MY_IP/" $FINAL_DEPLOYMENT_FILENAME
+sed -i "s/REPLACE_SS_IMAGE_TAG/$MY_IMAGE_TAG/" $FINAL_DEPLOYMENT_FILENAME
+sed -i "s/REPLACE_SS_IP/$MY_SS_IP_LINE/" $FINAL_DEPLOYMENT_FILENAME
 sed -i "s/REPLACE_SS_ENV_VERSION/$MY_SS_ENV_VALUE/" $FINAL_DEPLOYMENT_FILENAME
 sed -i "s/REPLACE_SS_VERSION/$MY_KUBE_NAME/" $FINAL_DEPLOYMENT_FILENAME
 sed -i "s/REPLACE_SS_NODEPORT/$MY_NODEPORT/" $FINAL_DEPLOYMENT_FILENAME

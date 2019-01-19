@@ -6,12 +6,16 @@ metadata:
   labels:
     component: kari-ss-REPLACE_SS_VERSION-component
     role: kari-ss-REPLACE_SS_VERSION-role
+  # For AWS EKS, not tested if messes with Azure AKS deployment.
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
 spec:
   type: LoadBalancer
   selector:
     component: kari-ss-REPLACE_SS_VERSION-component
     role: kari-ss-REPLACE_SS_VERSION-role
-  loadBalancerIP: REPLACE_IP
+  REPLACE_SS_IP
   ports:
   - name: http
     port: 3045
@@ -37,7 +41,7 @@ spec:
     spec:
       containers:
       - name: kari-ss-REPLACE_SS_VERSION-component
-        image: REPLACE_IMAGE_TAG
+        image: REPLACE_SS_IMAGE_TAG
         env:
         - name: SS_ENV
           value: REPLACE_SS_ENV_VERSION

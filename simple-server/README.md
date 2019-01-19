@@ -210,7 +210,7 @@ So, we demonstrated how to deploy the Simple Server Single-node version to the A
 
 ### AWS EKS Deployment
 
-
+Let's first add the Docker images to AWS ECR repositories:
 
 ```bash
 # First get your account id information:
@@ -230,6 +230,34 @@ docker push 111111111111111.dkr.ecr.eu-west-1.amazonaws.com/kari-sseks-dev-eks-e
 
 Do the same for images single-node and dynamodb.
 
+Then we need to tweak the bash script to create the AWS version of the Kubernetes deployment a bit. It just needs some annotations for the load balancer to be created by AWS EKS for the deployment:
+
+```yaml
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+```
+
+(You don't have to add those lines to the yaml file - I added them.)
+
+Then you are ready to use the script
+```bash
+AWS_PROFILE=YOUR-AWS-PROFILE  ./create-simple-server-deployment.sh single-node aws dummy-ip 31111 0.1 dummy-acr YOUR-AWS-ACCOUNT-ID YOUR-AWS-REGION YOUR-AWS-ECR-PREFIX
+# Check the deployment: 
+while true; do echo "*****************" ; AWS_PROFILE=YOUR-AWS-PROFILE kubectl get all --all-namespaces   ; sleep 5; done
+```
+
+Then check the load balancer dns AWS EKS created for the deployment:
+
+```bash
+AWS_PROFILE=YOUR-AWS-PROFILE kubectl describe svc kari-ss-single-node-deployment-lb -n kari-ss-single-node-ns
+# Should print everything and something like:
+LoadBalancer Ingress:     XXXXXXXXXXXXXXXXX-XXXXXXXXXXXXXx.elb.eu-west-1.amazonaws.com
+# Use the test script to see that the load balancer and the deployment works:
+./call-all-ip-port.sh XXXXXXXXXXXXXXXXX-XXXXXXXXXXXXXx.elb.eu-west-1.amazonaws.com 3045
+```
+
+All right! That was the single-node version deployment to AWS EKS. Next the dynamodb version.
 
 
 ## Azure Table Storage Service
