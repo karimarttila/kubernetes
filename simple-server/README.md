@@ -240,7 +240,8 @@ Then we need to tweak the bash script to create the AWS version of the Kubernete
 
 (You don't have to add those lines to the yaml file - I added them.)
 
-Then you are ready to use the script
+Then you are ready to use the script:
+
 ```bash
 AWS_PROFILE=YOUR-AWS-PROFILE  ./create-simple-server-deployment.sh single-node aws dummy-ip 31111 0.1 dummy-acr YOUR-AWS-ACCOUNT-ID YOUR-AWS-REGION YOUR-AWS-ECR-PREFIX
 # Check the deployment: 
@@ -260,7 +261,7 @@ LoadBalancer Ingress:     XXXXXXXXXXXXXXXXX-XXXXXXXXXXXXXx.elb.eu-west-1.amazona
 All right! That was the single-node version deployment to AWS EKS. Next the dynamodb version.
 
 
-## Azure Table Storage Service
+## Azure Table Storage Service Version
 
 The Simple Server Tables-storage version is a real stateless application that can be deployed to as many nodes as is needed (stores all application data in Azure Table storage database).
 
@@ -325,6 +326,47 @@ NOTE: We have to use different nodeport this time since we reserved 31111 for si
 NOTE: I tried to comment out the ```loadBalancerIP: REPLACE_IP``` in the yml file and AKS happily assigned some dynamic public IP for the load balancer. I tested the application with my ```call-all-ip-port.sh``` script and everything worked fine also with this public ip. 
 
 NOTE: I really should implement a real Robot Framework test suite to replace this poor man's Robot Framework script ```call-all-ip-port.sh``` - maybe an interesting future project.
+
+
+## AWS DynamoDB Version
+
+### Minikube Deployment
+
+I'll skip the minikube deployment for now since I use the aws profile with Amazonica library (and not AWS access and secret keys which would have been easy to inject to Kubernetes deployment as environmental variables). So, either I should change the code a bit or I should e.g. mount a home volume with ~/.aws/credentials file with the right profile. Too much trouble. I already tested how to run the DynamoDB version from Docker mounting the host ~/.aws directory. So, let's go directly to the real stuff and run the DynamoDB version in AWS EKS.
+
+
+### AWS EKS Deployment
+
+The development version used the AWS profile found in ~/.aws/credentials but it is not a best practice in AWS to config applications in EC2s to use AWS access and secret keys but give permission to use the particular service using EC2's instance profile role.
+
+First I had to add the missing configuration for allowing DynamoDB access for the EKS worker node instance profile IAM role (so that application running in a Kubernetes pod running in a EC2 worker node has right to access Dynamodb using the EC2's instance profile role).
+
+Then there were issue with the amazonica library and my development configuration for using AWS profile - in AWS EKS we are not using the AWS profile but the instance profile. Therefore I had to make a code change so that when the application is running in AWS EKS it is not using the AWS profile but the EC2 instance profile. The development cycle would have been a bit long (make change, create Docker image, tag, push to ECR, deploy to EKS, try whether it is working and if not go back to step 1...). Luckily there is AWS Security Token Service (STS) which provides a feature to assume a certain role and you can test that role locally running your application locally with that role (you get temporary credentials for the role). First you have to add your own arn (the user account you are using in AWS, i.e. which access key and secret key you are using in AWS_PROFILE) as principal to assume role. I didn't add this to terraform code since it comprises my user account arn (a bit delicate information). But you can go to AWS Portal / IAM / Roles / kari-sseks-dev-eks-worker-node-iam-role / Trust relationships / Edit trust relationship => add:
+
+```json
+    ,
+    {
+      "Effect": "Allow",
+      "Principal": { "AWS": "YOUR-USER-ARN-HERE" },
+      "Action": "sts:AssumeRole"
+    }
+```
+
+Then you can get the temprorary credentials of assuming "kari-sseks-dev-eks-worker-node-iam-role" role:
+
+```bash
+AWS_PROFILE=YOUR-AWS-PROFILE aws sts assume-role --role-arn arn:aws:iam::11111111111:role/kari-sseks-dev-eks-worker-node-iam-role --role-session-name local-testing-session --profile "YOUR-AWS-PROFILE"
+```
+
+You get access key, secret key and session key, use those as environmental variable when running the application:
+
+```bash
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_SESSION_TOKEN=
+```
+
+
 
 
 # Kubernetes Debugging Tricks
