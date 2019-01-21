@@ -381,8 +381,6 @@ Then there was a major hassle with debugging one environmental variable. I use S
 
 
 
-
-
 # Kubernetes Debugging Tricks
 
 ## Getting Interactive Shell to a Running Kubernetes Pod
