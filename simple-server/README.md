@@ -352,7 +352,7 @@ Then there were issue with the amazonica library and my development configuratio
     }
 ```
 
-Then you can get the temprorary credentials of assuming "kari-sseks-dev-eks-worker-node-iam-role" role:
+Then you can get the temporary credentials of assuming "kari-sseks-dev-eks-worker-node-iam-role" role:
 
 ```bash
 AWS_PROFILE=YOUR-AWS-PROFILE aws sts assume-role --role-arn arn:aws:iam::11111111111:role/kari-sseks-dev-eks-worker-node-iam-role --role-session-name local-testing-session --profile "YOUR-AWS-PROFILE"
@@ -376,6 +376,10 @@ So, this was actually a good thing now I also verified that:
 - I'm using the assumed role - running app with Kubernetes worker node EC2 Instance profile role.
 - The Instance profile has rights to query DynamoDB as I configured in Kubernetes EKS project side.
 - But it doesn't have rights to access the index - that was something I didn't know that you have to give access right separately.
+
+Then there was a major hassle with debugging one environmental variable. I use SS_ENV environmental variable to tell the application which mode it is supposed to be running (single-node, azure-table-storage, local-dynamodb, dynamodb, aws-dynamodb-eks...). I first forgot that my Clojure build tool [Leiningen](https://leiningen.org/) create a file .lein-env in which Leiningen dumps the environmental variables found in the Clojure profile.clj file. These environmental variable values override the values found in the environment. Therefore even though I set the environmental variables right in the Kubernetes deployment konfiguration the application read different values in the .lein-env file. Therefore I removed the .lein-env from the Docker image. I deleted the old image from the ECR repository and pushed the new image. And tested the Kubernetes deployment again. And wrong profile again, wtf? I changed the Kubernetes deployment entrypoint so that I could ssh inside the pod and check that the .lein-env file shouldn't there - but it was. Maybe I somehow had hassled creating the Docker image in the first place? I ssh'd inside the docker image in my host that I just used to push the image to ECR - and the file wasn't there - wtf? It was supposed to be the same Docker image but in my host the file wasn't there (ok) and in ECR the file was there (not ok). I thought that could it be possible that even though I had deleted the old image in ECR there could be some image layers in some ECR cache? I deleted the image again, tagged with another version number (0.1 -> 0.2), pushed the image to ECR and deployed the Kubernetes configuration using new tag version 0.2. Everything worked this time. Really odd. I thought a moment for an explanation for this. Either somehow I had hassled the process anyway or ECR really somehow caches some Docker image layers and when you push the image again with the same tag it uses some old layers from the cache (or something like that). Anyway I was happy that after some hours of debugging I finally solved the issue and my poor man's Robotframework test suite [call-all-ip-port.sh](https://github.com/karimarttila/clojure/blob/master/clj-ring-cljs-reagent-demo/simple-server/scripts/call-all-ip-port.sh) happily ran through all test cases.
+
+
 
 
 

@@ -47,6 +47,12 @@ spec:
           value: REPLACE_SS_ENV_VERSION
         - name: MY_ENV
           value: dev
+          # AWS endpoint, hard coded for the exercise.
+        - name: ENDPOINT
+          value: eu-west-1
+          # AWS table prefix, hard coded for the exercise.
+        - name: SS_TABLE_PREFIX
+          value: kari-sseks
         - name: AZURE_CONNECTION_STRING
           value: REPLACE_SS_ENDPOINT
         ports:

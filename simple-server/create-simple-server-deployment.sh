@@ -38,7 +38,8 @@ elif [ "$MY_SS_VERSION" == "azure-table-storage" ]; then
   MY_SS_ENDPOINT=$AZURE_CONNECTION_STRING
 elif [ "$MY_SS_VERSION" == "aws-dynamodb" ]; then
   MY_IMAGE_VERSION="simple-server-clojure-dynamodb:$MY_VERSION"
-  MY_SS_ENV_VALUE=aws-dynamodb
+  # Use the AWS EKS ss env.
+  MY_SS_ENV_VALUE=aws-dynamodb-eks
   MY_KUBE_NAME=dynamodb
 else
   echo "Unknown choice: $MY_SS_VERSION"
